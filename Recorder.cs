@@ -24,9 +24,13 @@ namespace Recorder {
             get { return Assembly.GetExecutingAssembly().GetName().Version; }
         }
 
-		public static Dictionary<string, Builder> builders;
-		public static Dictionary<string, Building> buildings;
-		public static Dictionary<string, List<object>> buildhistory;
+		public static Recorder GetInstance () { return instance; }
+		private static Recorder instance;
+
+		public DirectoryInfo SavedBuildings;
+		public Dictionary<string, Builder> builders;
+		public Dictionary<string, Building> buildings;
+		public Dictionary<string, List<object>> buildhistory;
 		public String[,] prefabNames = new string[,]{
 			{"SingleBed", ";deploy_singlebed"},
 			{"MetalCeiling", ";struct_metal_ceiling"},
@@ -67,6 +71,7 @@ namespace Recorder {
 		public string msgName = "Recorder";
 
         public override void Initialize() {
+			SavedBuildings = new DirectoryInfo(ModuleFolder);
 			builders = new Dictionary<string, Builder>();
 			buildings = new Dictionary<string, Building>();
 			buildhistory = new Dictionary<string, List<object>>();
@@ -131,6 +136,7 @@ namespace Recorder {
 						}
 
 						buildings.Add(b.buildingName, b.building);
+						b.building.ToIni ();
 						builders.Remove(player.SteamID);
 						player.MessageFrom(msgName, "Your building is saved successfully.");
 					}
@@ -215,11 +221,11 @@ namespace Recorder {
 
 		}*/
 
-		public string V3ToString(Vector3 v3) {
+		public static string V3ToString(Vector3 v3) {
 			return String.Format("{0}|{1}|{2}", new object[] { v3.x, v3.y, v3.z });
 		}
 
-		public Vector3 StringToV3(string str) {
+		public static Vector3 StringToV3(string str) {
 			try {
 				string[] nums = str.Split(new char[] { '|' });
 				return new Vector3(
@@ -231,11 +237,11 @@ namespace Recorder {
 			}
 		}
 
-		public string QuatToString(Quaternion quat) {
+		public static string QuatToString(Quaternion quat) {
 			return String.Format("{0}|{1}|{2}|{3}", new object[] { quat.x, quat.y, quat.z, quat.w });
 		}
 
-		public Quaternion StringToQuat(string str) {
+		public static Quaternion StringToQuat(string str) {
 			try {
 				string[] nums = str.Split(new char[] { '|' });
 				return new Quaternion(
