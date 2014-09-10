@@ -1,10 +1,8 @@
 ﻿using Rust;
 using Fougerite;
-using Fougerite.Events;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 using UnityEngine;
 
@@ -24,7 +22,7 @@ namespace Recorder {
             get { return Assembly.GetExecutingAssembly().GetName().Version; }
         }
 
-		public static Recorder GetInstance () { return instance; }
+		public static Recorder GetInstance() { return instance; }
 		private static Recorder instance;
 
 		public DirectoryInfo SavedBuildings;
@@ -71,7 +69,11 @@ namespace Recorder {
 		public string msgName = "Recorder";
 
         public override void Initialize() {
+			instance = this;
 			SavedBuildings = new DirectoryInfo(ModuleFolder);
+			if (!Directory.Exists(SavedBuildings.FullName)) {
+				Directory.CreateDirectory(SavedBuildings.FullName);
+			}
 			builders = new Dictionary<string, Builder>();
 			buildings = new Dictionary<string, Building>();
 			buildhistory = new Dictionary<string, List<object>>();
@@ -79,9 +81,13 @@ namespace Recorder {
 			Hooks.OnEntityDeployed -= Record;
 			Hooks.OnCommand += OnCommandHandler;
 			Hooks.OnEntityDeployed += Record;
+			LoadBuildings();
 		}
 
 		public override void DeInitialize() {
+			foreach (Building b in buildings.Values) {
+				b.ToIni();
+			}
 			builders.Clear();
 			buildings.Clear();
 			Hooks.OnCommand -= OnCommandHandler;
@@ -118,10 +124,12 @@ namespace Recorder {
         void OnCommandHandler(Fougerite.Player player, string text, string[] args) {
 			if (player.Admin) {
 				if (text.ToLower() == "record" || text.ToLower() == "rec") {
-					if (builders.ContainsKey (player.SteamID)) {
+					if (builders.ContainsKey(player.SteamID)) {
 						player.MessageFrom(msgName, String.Format("You are already building: {0}", builders[player.SteamID].building.name));
 					} else if (args.Length == 0) {
 						player.MessageFrom(msgName, "You need to specify a name for your building.");
+					} else if (buildings.ContainsKey(String.Join(" ", args))) {
+						player.MessageFrom(msgName, "There is already a building called: " + String.Join(" ", args));
 					} else {
 						var builder = new Builder(player.SteamID, String.Join(" ", args));
 						builders.Add(player.SteamID, builder);
@@ -136,7 +144,7 @@ namespace Recorder {
 						}
 
 						buildings.Add(b.buildingName, b.building);
-						b.building.ToIni ();
+						b.building.ToIni();
 						builders.Remove(player.SteamID);
 						player.MessageFrom(msgName, "Your building is saved successfully.");
 					}
@@ -189,6 +197,34 @@ namespace Recorder {
 			}
         }
 
+		private IEnumerable<DirectoryInfo> GetBuildingPaths() {
+			foreach (DirectoryInfo dirInfo in SavedBuildings.GetDirectories()) {
+				string path = Path.Combine(dirInfo.FullName, dirInfo.Name + ".ini");
+				if (File.Exists(path)) yield return dirInfo;
+			}
+		}
+
+		public void LoadBuildings() {
+			buildings.Clear();
+
+			foreach (DirectoryInfo bPath in GetBuildingPaths()) {
+				IniParser ini = new IniParser(Path.Combine(bPath.FullName, bPath.Name + ".ini"));
+				Building building = new Building(bPath.Name, Vector3.zero, Quaternion.identity);
+				int count = ini.Count();
+
+				string prefab = string.Empty;
+				Vector3 v3 = Vector3.zero;
+				Quaternion q = Quaternion.identity;
+
+				for (var i = 0; i < count; i++) {
+					prefab = ini.GetSetting(i.ToString(), "prefab");
+					v3 = StringToV3(ini.GetSetting(i.ToString(), "localPos"));
+					q = StringToQuat(ini.GetSetting(i.ToString(), "localRot"));
+					building.Add(v3, q, prefab);
+				}
+				buildings.Add(bPath.Name, building);
+			}
+		}
 
 		/*********
 		 * UTILS *
@@ -206,7 +242,7 @@ namespace Recorder {
 		public Vector3 PlayerIsLookingAt(Fougerite.Player player) {
 			RaycastHit hit;
 			var orig = player.PlayerClient.controllable.eyesRay;
-			if (Physics.Raycast(orig, out hit, 500.0F, 1 << 19)){
+			if (Physics.Raycast(orig, out hit, 500.0F, 1 << 19)) {
 				return hit.point;
 			}
 			return Vector3.zero;

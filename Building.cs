@@ -15,7 +15,7 @@ namespace Recorder {
 
 		public Building(string namee, Vector3 ov3, Quaternion ovRot) {
 			name = namee;
-			path = new DirectoryInfo(Path.Combine (Recorder.GetInstance ().SavedBuildings.FullName, name));
+			path = new DirectoryInfo(Path.Combine(Recorder.GetInstance ().SavedBuildings.FullName, name));
 			origo = new Origo(ov3, ovRot);
 			parts = new Dictionary<int, BuildingPart>();
 		}
@@ -51,7 +51,7 @@ namespace Recorder {
 					sm.AddStructureComponent(spawnedObj.Object as StructureComponent);
 				}
 			}
-			Recorder.buildhistory[player.SteamID] = bhistory;
+			Recorder.GetInstance().buildhistory[player.SteamID] = bhistory;
 		}
 
 		public Vector3 WorldToLocalpos(Vector3 v3) {
@@ -59,16 +59,22 @@ namespace Recorder {
 		}
 
 		public void ToIni() {
-			if (File.Exists (path.FullName + ".ini")) {
+			if (File.Exists(Path.Combine(path.FullName, name) + ".ini")) {
 				return;
 			}
-			var ini = new IniParser (path.FullName + ".ini");
-			for (int i = 0; i < parts.Count; i++) {
-				ini.AddSetting (i.ToString(), "prefab", parts[i].prefab);
-				ini.AddSetting (i.ToString(), "localPos", Recorder.V3ToString(parts[i].localPosition));
-				ini.AddSetting (i.ToString(), "localRot", Recorder.QuatToString(parts[i].localRotation));
+			if (!Directory.Exists(path.FullName)) {
+				Directory.CreateDirectory(path.FullName);
 			}
-			ini.Save ();
+
+			File.WriteAllText(Path.Combine(path.FullName, name) + ".ini", "");
+			var ini = new IniParser(Path.Combine(path.FullName, name) + ".ini");
+
+			for (int i = 0; i < parts.Count; i++) {
+				ini.AddSetting(i.ToString(), "prefab", parts[i].prefab);
+				ini.AddSetting(i.ToString(), "localPos", Recorder.V3ToString(parts[i].localPosition));
+				ini.AddSetting(i.ToString(), "localRot", Recorder.QuatToString(parts[i].localRotation));
+			}
+			ini.Save();
 		}
 	}
 }
