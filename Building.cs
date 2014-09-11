@@ -38,30 +38,37 @@ namespace Recorder {
 
 			Vector3 spawnPos;
 			Quaternion spawnRot;
-			float playerY = player.PlayerClient.controllable.transform.rotation.eulerAngles.y;
+			/*float playerY = player.PlayerClient.controllable.transform.rotation.eulerAngles.y;
 			float rotationValue = 0.0F;
+			bool first = true;*/
 
 			List<object> bhistory = new List<object> ();
 
 			foreach (BuildingPart bp in parts.Values) {
-
 				// if I load the building it doesn't have an origo
-				if (origo == null)
+			/*	if (origo == null)
 					origo = new Origo(bp.localPosition, bp.localRotation);
 
+				if (first) {
+					rotationValue = playerY;
+					first = !first;
+				} else {
+					rotationValue = playerY + (origo.rotation.eulerAngles.y - bp.localRotation.eulerAngles.y);
+				}
 
-				rotationValue = 0 - (bp.localRotation.eulerAngles.y + ((origo.rotation.eulerAngles.y - bp.localRotation.eulerAngles.y) - playerY));
+				UnityEngine.Debug.Log (rotationValue + " = " + playerY + "(" + (origo.rotation.eulerAngles.y - bp.localRotation.eulerAngles.y) + ")");
 
-				// spawnPos = buildTo + bp.localPosition;
-				spawnRot = Quaternion.Euler(0, rotationValue, 0);
+				spawnRot = Quaternion.Euler(0, rotationValue, 0);*/
+				spawnRot = bp.localRotation;
+				spawnPos = buildTo + bp.localPosition;
 
-				float nuX = (float)Math.Cos((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.x - (float)Math.Sin((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.z;
+				// darn
+				/*float nuX = (float)Math.Cos((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.x - (float)Math.Sin((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.z;
 				float nuZ = (float)Math.Sin((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.x + (float)Math.Cos((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.z;
-
-				UnityEngine.Debug.Log(nuX + " ... " + nuZ);
-				UnityEngine.Debug.Log(spawnRot.eulerAngles.ToString());
-
 				spawnPos = buildTo + new Vector3(nuX, bp.localPosition.y, nuZ);
+
+				UnityEngine.Debug.Log (bp.localPosition.x + " ... " + bp.localPosition.z);
+				UnityEngine.Debug.Log (nuX + " ... " + nuZ);*/
 
 				if (sm == null) {
 					sm = World.GetWorld().CreateSM(player, spawnPos.x, spawnPos.y, spawnPos.z, spawnRot);
