@@ -38,17 +38,36 @@ namespace Recorder {
 
 			Vector3 spawnPos;
 			Quaternion spawnRot;
+			float playerY = player.PlayerClient.controllable.transform.rotation.eulerAngles.y;
+			float rotationValue = 0.0F;
 
-			List<object> bhistory = new List<object>();
+			List<object> bhistory = new List<object> ();
+
 			foreach (BuildingPart bp in parts.Values) {
-				spawnPos = buildTo + bp.localPosition;
-				spawnRot = bp.localRotation;
+
+				// if I load the building it doesn't have an origo
+				if (origo == null)
+					origo = new Origo(bp.localPosition, bp.localRotation);
+
+
+				rotationValue = 0 - (bp.localRotation.eulerAngles.y + ((origo.rotation.eulerAngles.y - bp.localRotation.eulerAngles.y) - playerY));
+
+				// spawnPos = buildTo + bp.localPosition;
+				spawnRot = Quaternion.Euler(0, rotationValue, 0);
+
+				float nuX = (float)Math.Cos((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.x - (float)Math.Sin((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.z;
+				float nuZ = (float)Math.Sin((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.x + (float)Math.Cos((double)Math.PI * -rotationValue / 180.0F) * bp.localPosition.z;
+
+				UnityEngine.Debug.Log(nuX + " ... " + nuZ);
+				UnityEngine.Debug.Log(spawnRot.eulerAngles.ToString());
+
+				spawnPos = buildTo + new Vector3(nuX, bp.localPosition.y, nuZ);
 
 				if (sm == null) {
 					sm = World.GetWorld().CreateSM(player, spawnPos.x, spawnPos.y, spawnPos.z, spawnRot);
 				}
 				Entity spawnedObj = (Entity)World.GetWorld().Spawn(bp.prefab, spawnPos.x, spawnPos.y, spawnPos.z, spawnRot);
-				bhistory.Add (spawnedObj.Object);
+				bhistory.Add(spawnedObj.Object);
 
 				if (spawnedObj.Object is DeployableObject) {
 					spawnedObj.ChangeOwner(player);
@@ -56,7 +75,7 @@ namespace Recorder {
 						var dep = spawnedObj.Object as DeployableObject;
 						Inventory inv = dep.GetComponent<Inventory>();
 						foreach (DeployedInvItem item in bp.Inv.Items.Values) {
-							ItemDataBlock itemDB = DatablockDictionary.GetByName (item.Name);
+							ItemDataBlock itemDB = DatablockDictionary.GetByName(item.Name);
 							inv.AddItemAmount(itemDB, item.Quantity);
 						}
 					}
@@ -64,10 +83,10 @@ namespace Recorder {
 					sm.AddStructureComponent(spawnedObj.Object as StructureComponent);
 				}
 			}
-			sm.RecalculateBounds();
-			sm.RecalculateStructureLinks();
-			sm.RecalculateStructureSize();
-			sm.GenerateLinks();
+			sm.RecalculateBounds ();
+			sm.RecalculateStructureLinks ();
+			sm.RecalculateStructureSize ();
+			sm.GenerateLinks ();
 			sm = null;
 			Recorder.GetInstance().buildhistory[player.SteamID] = bhistory;
 		}
