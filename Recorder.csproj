@@ -57,6 +57,9 @@
     <Compile Include="BuildingPart.cs" />
     <Compile Include="Origo.cs" />
     <Compile Include="Building.cs" />
+    <Compile Include="DeployedInv.cs" />
+    <Compile Include="DeployedInvItem.cs" />
+    <Compile Include="Conf.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
